@@ -1,0 +1,54 @@
+
+# ===== Java =====
+*.class
+*.log
+*.ctxt
+
+# ===== Maven =====
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# ===== Gradle =====
+.gradle/
+build/
+
+# ===== IntelliJ IDEA =====
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# ===== VS Code =====
+.vscode/
+
+# ===== Eclipse =====
+.project
+.classpath
+.settings/
+
+# ===== Spring Boot =====
+/logs/
+spring.log
+
+# ===== Environment variables =====
+.env
+.env.*
+application-local.yml
+application-local.properties
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Docker =====
+*.tar
+docker-compose.override.yml
+
+# ===== Test coverage =====
+/coverage/
+*.exec
+
+# ===== Node =====
+node_modules/
+dist/
