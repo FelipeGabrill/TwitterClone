@@ -34,19 +34,24 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<User> findById(UUID id) {
-        return jpaUserRepository.findById(id).map(userMapper::toDomain);
+    public Optional<User> findByIdAndActiveTrue(UUID id) {
+        return jpaUserRepository.findByIdAndActiveTrue(id).map(userMapper::toDomain);
     }
 
     @Override
-    public Optional<User> findByUsername(String username) {
-        return jpaUserRepository.findByUsername(username).map(userMapper::toDomain);
+    public Optional<User> findByUsernameAndActiveTrue(String username) {
+        return jpaUserRepository.findByUsernameAndActiveTrue(username).map(userMapper::toDomain);
     }
 
     @Override
-    public Page<UserPreviewProjection> findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(
+    public Page<UserPreviewProjection> findByActiveTrueAndUsernameContainingIgnoreCaseOrActiveTrueAndNameContainingIgnoreCase(
             String username, String name, Pageable pageable) {
 
-        return jpaUserRepository.findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(username, name, pageable);
+        return jpaUserRepository.findByActiveTrueAndUsernameContainingIgnoreCaseOrActiveTrueAndNameContainingIgnoreCase(username, name, pageable);
+    }
+
+    @Override
+    public boolean existsByUsername(String username) {
+        return jpaUserRepository.existsByUsernameIgnoreCase(username);
     }
 }

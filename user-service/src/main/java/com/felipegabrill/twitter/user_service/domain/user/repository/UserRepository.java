@@ -11,8 +11,9 @@ import java.util.UUID;
 public interface UserRepository {
 
     User save(User user);
-    Optional<User> findById(UUID id);
-    Optional<User> findByUsername(String username);
-    Page<UserPreviewProjection> findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(String username, String name, Pageable pageable);
+    Optional<User> findByIdAndActiveTrue(UUID id);
+    Optional<User> findByUsernameAndActiveTrue(String username);
+    Page<UserPreviewProjection> findByActiveTrueAndUsernameContainingIgnoreCaseOrActiveTrueAndNameContainingIgnoreCase(String username, String name, Pageable pageable);
+    boolean existsByUsername(String username);
 
 }

@@ -4,6 +4,7 @@ import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.CreateUserDT
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UpdateUserDTO;
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserResponseDTO;
 import com.felipegabrill.twitter.user_service.application.exceptions.ResourceNotFoundException;
+import com.felipegabrill.twitter.user_service.application.exceptions.UsernameAlreadyExistsException;
 import com.felipegabrill.twitter.user_service.application.usecases.UserUseCases;
 import com.felipegabrill.twitter.user_service.domain.user.User;
 import com.felipegabrill.twitter.user_service.domain.user.projections.UserPreviewProjection;
@@ -29,6 +30,8 @@ public class UserUseCaseImpl implements UserUseCases {
     @Transactional
     @Override
     public UserResponseDTO create(CreateUserDTO createUserDTO) {
+        validateUsernameDoesNotExist(createUserDTO.getUsername());
+
         User user = new User(
                 null,
                 createUserDTO.getUsername(),
@@ -42,32 +45,39 @@ public class UserUseCaseImpl implements UserUseCases {
         return new UserResponseDTO(user);
     }
 
+    private void validateUsernameDoesNotExist(String username) {
+        if (userRepository.existsByUsername(username)) {
+            throw new UsernameAlreadyExistsException("Username: " + username + " already exits.");
+        }
+    }
+
     @Transactional(readOnly = true)
     @Override
     public UserResponseDTO getByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource Not Found"));
+        User user = userRepository.findByUsernameAndActiveTrue(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return new UserResponseDTO(user);
     }
+
 
     @Transactional(readOnly = true)
     @Override
     public UserResponseDTO getById(UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource Not Found"));
+        User user = getUserActiveDomainById(id);
         return new UserResponseDTO(user);
     }
 
-    private User getUserDomainById(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource Not Found"));
+
+    private User getUserActiveDomainById(UUID id) {
+        return userRepository.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     @Transactional
     @Override
     public UserResponseDTO updateProfile(UUID id, UpdateUserDTO updateUserDTO) {
         try {
-            User user = getUserDomainById(id);
+            User user = getUserActiveDomainById(id);
 
             if (updateUserDTO.getName() != null) {
                 user.setName(updateUserDTO.getName());
@@ -97,7 +107,7 @@ public class UserUseCaseImpl implements UserUseCases {
     @Transactional
     @Override
     public void deactivate(UUID userId) {
-        User user = getUserDomainById(userId);
+        User user = getUserActiveDomainById(userId);
         user.setActive(false);
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
@@ -106,7 +116,7 @@ public class UserUseCaseImpl implements UserUseCases {
     @Transactional
     @Override
     public void incrementFollowersCount(UUID userId) {
-        User user = getUserDomainById(userId);
+        User user = getUserActiveDomainById(userId);
         user.setFollowersCount(user.getFollowersCount() + 1);
         userRepository.save(user);
     }
@@ -114,7 +124,7 @@ public class UserUseCaseImpl implements UserUseCases {
     @Transactional
     @Override
     public void decrementFollowersCount(UUID userId) {
-        User user = getUserDomainById(userId);
+        User user = getUserActiveDomainById(userId);
         user.setFollowersCount(Math.max(user.getFollowersCount() - 1, 0));
         userRepository.save(user);
     }
@@ -123,6 +133,6 @@ public class UserUseCaseImpl implements UserUseCases {
     @Transactional(readOnly = true)
     @Override
     public Page<UserPreviewProjection> searchUsers(String username, String name, Pageable pageable) {
-        return userRepository.findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(username, name, pageable);
+        return userRepository.findByActiveTrueAndUsernameContainingIgnoreCaseOrActiveTrueAndNameContainingIgnoreCase(username, name, pageable);
     }
 }

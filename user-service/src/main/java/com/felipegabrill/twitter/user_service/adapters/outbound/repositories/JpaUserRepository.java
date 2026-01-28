@@ -11,9 +11,17 @@ import java.util.UUID;
 
 public interface JpaUserRepository extends JpaRepository<JpaUserEntity, UUID> {
 
-    Optional<JpaUserEntity> findByUsername(String username);
+    Page<UserPreviewProjection>
+    findByActiveTrueAndUsernameContainingIgnoreCaseOrActiveTrueAndNameContainingIgnoreCase(
+            String username,
+            String name,
+            Pageable pageable
+    );
 
-    Page<UserPreviewProjection> findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(
-            String username, String name, Pageable pageable);
 
+    Optional<JpaUserEntity> findByUsernameAndActiveTrue(String Username);
+
+    Optional<JpaUserEntity> findByIdAndActiveTrue(UUID id);
+
+    boolean existsByUsernameIgnoreCase(String username);
 }
