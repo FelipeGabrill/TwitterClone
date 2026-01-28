@@ -1,18 +1,16 @@
-package com.felipegabrill.twitter.user_service.adapters.entities;
+package com.felipegabrill.twitter.user_service.adapters.outbound.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "tb_user")
 public class JpaUserEntity {
 
     @Id
+    @GeneratedValue
     private UUID id;
 
     @Column(unique = true, nullable = false)
