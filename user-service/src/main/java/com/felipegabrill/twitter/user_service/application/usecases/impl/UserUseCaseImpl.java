@@ -1,12 +1,15 @@
 package com.felipegabrill.twitter.user_service.application.usecases.impl;
 
-import com.felipegabrill.twitter.user_service.application.commands.CreateUserCommand;
-import com.felipegabrill.twitter.user_service.application.commands.UpdateUserCommand;
+import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.CreateUserDTO;
+import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UpdateUserDTO;
+import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserResponseDTO;
+import com.felipegabrill.twitter.user_service.application.exceptions.ResourceNotFoundException;
 import com.felipegabrill.twitter.user_service.application.usecases.UserUseCases;
 import com.felipegabrill.twitter.user_service.domain.user.User;
+import com.felipegabrill.twitter.user_service.domain.user.projections.UserPreviewProjection;
 import com.felipegabrill.twitter.user_service.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,62 +28,76 @@ public class UserUseCaseImpl implements UserUseCases {
 
     @Transactional
     @Override
-    public User create(CreateUserCommand command) {
+    public UserResponseDTO create(CreateUserDTO createUserDTO) {
         User user = new User(
-                UUID.randomUUID(),
-                command.username(),
-                command.name(),
-                command.bio(),
-                command.location(),
-                command.profileImageUrl(),
-                command.bannerImageUrl()
+                null,
+                createUserDTO.getUsername(),
+                createUserDTO.getName(),
+                createUserDTO.getBio(),
+                createUserDTO.getLocation(),
+                "",
+                ""
         );
-        return userRepository.save(user);
+        user = userRepository.save(user);
+        return new UserResponseDTO(user);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public User getByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public UserResponseDTO getByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource Not Found"));
+        return new UserResponseDTO(user);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public User getById(UUID id) {
+    public UserResponseDTO getById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource Not Found"));
+        return new UserResponseDTO(user);
+    }
+
+    private User getUserDomainById(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Resource Not Found"));
     }
 
     @Transactional
     @Override
-    public User updateProfile(UpdateUserCommand command) {
-        User user = getById(command.userId());
-        if (command.name() != null) {
-            user.setName(command.name());
-        }
-        if (command.bio() != null) {
-            user.setBio(command.bio());
-        }
-        if (command.location() != null) {
-            user.setLocation(command.location());
-        }
-        if (command.profileImageUrl() != null) {
-            user.setProfileImageUrl(command.profileImageUrl());
-        }
-        if (command.bannerImageUrl() != null) {
-            user.setBannerImageUrl(command.bannerImageUrl());
-        }
+    public UserResponseDTO updateProfile(UUID id, UpdateUserDTO updateUserDTO) {
+        try {
+            User user = getUserDomainById(id);
 
-        user.setUpdatedAt(LocalDateTime.now());
+            if (updateUserDTO.getName() != null) {
+                user.setName(updateUserDTO.getName());
+            }
+            if (updateUserDTO.getBio() != null) {
+                user.setBio(updateUserDTO.getBio());
+            }
+            if (updateUserDTO.getLocation() != null) {
+                user.setLocation(updateUserDTO.getLocation());
+            }
+//            if (updateUserDTO.getProfileImageUrl() != null) {
+//                user.setProfileImageUrl(updateUserDTO.getProfileImageUrl());
+//            }
+//            if (updateUserDTO.getBannerImageUrl() != null) {
+//                user.setBannerImageUrl(updateUserDTO.getBannerImageUrl());
+//            }
 
-        return userRepository.save(user);
+            user.setUpdatedAt(LocalDateTime.now());
+
+            User updatedUser = userRepository.save(user);
+            return new UserResponseDTO(updatedUser);
+        } catch (EntityNotFoundException e) {
+            throw new ResourceNotFoundException("Resource Not Found");
+        }
     }
 
     @Transactional
     @Override
     public void deactivate(UUID userId) {
-        User user = getById(userId);
+        User user = getUserDomainById(userId);
         user.setActive(false);
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
@@ -89,7 +106,7 @@ public class UserUseCaseImpl implements UserUseCases {
     @Transactional
     @Override
     public void incrementFollowersCount(UUID userId) {
-        User user = getById(userId);
+        User user = getUserDomainById(userId);
         user.setFollowersCount(user.getFollowersCount() + 1);
         userRepository.save(user);
     }
@@ -97,30 +114,15 @@ public class UserUseCaseImpl implements UserUseCases {
     @Transactional
     @Override
     public void decrementFollowersCount(UUID userId) {
-        User user = getById(userId);
+        User user = getUserDomainById(userId);
         user.setFollowersCount(Math.max(user.getFollowersCount() - 1, 0));
         userRepository.save(user);
     }
 
-    @Transactional
-    @Override
-    public void incrementFollowingCount(UUID userId) {
-        User user = getById(userId);
-        user.setFollowingCount(user.getFollowingCount() + 1);
-        userRepository.save(user);
-    }
-
-    @Transactional
-    @Override
-    public void decrementFollowingCount(UUID userId) {
-        User user = getById(userId);
-        user.setFollowingCount(Math.max(user.getFollowingCount() - 1, 0));
-        userRepository.save(user);
-    }
 
     @Transactional(readOnly = true)
     @Override
-    public Page<User> searchUsers(String username, String name, Pageable pageable) {
+    public Page<UserPreviewProjection> searchUsers(String username, String name, Pageable pageable) {
         return userRepository.findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(username, name, pageable);
     }
 }

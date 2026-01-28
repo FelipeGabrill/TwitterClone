@@ -3,6 +3,7 @@ package com.felipegabrill.twitter.user_service.adapters.outbound.repositories.im
 import com.felipegabrill.twitter.user_service.adapters.outbound.entities.JpaUserEntity;
 import com.felipegabrill.twitter.user_service.adapters.outbound.repositories.JpaUserRepository;
 import com.felipegabrill.twitter.user_service.domain.user.User;
+import com.felipegabrill.twitter.user_service.domain.user.projections.UserPreviewProjection;
 import com.felipegabrill.twitter.user_service.domain.user.repository.UserRepository;
 import com.felipegabrill.twitter.user_service.infrastructure.mappers.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,12 +44,9 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Page<User> findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(String username, String name, Pageable pageable) {
-        Page<JpaUserEntity> entities = jpaUserRepository.findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(username, name, pageable);
-        return new PageImpl<>(
-                entities.stream().map(userMapper::toDomain).collect(Collectors.toList()),
-                pageable,
-                entities.getTotalElements()
-        );
+    public Page<UserPreviewProjection> findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(
+            String username, String name, Pageable pageable) {
+
+        return jpaUserRepository.findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(username, name, pageable);
     }
 }

@@ -1,4 +1,8 @@
 package com.felipegabrill.twitter.user_service.domain.user.projections;
 
-public class UserPreviewDTO {
+public interface UserPreviewProjection {
+
+    String getUsername();
+    String getProfileImageUrl();
+
 }

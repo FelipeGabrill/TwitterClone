@@ -1,8 +1,9 @@
 package com.felipegabrill.twitter.user_service.application.usecases;
 
-import com.felipegabrill.twitter.user_service.application.commands.CreateUserCommand;
-import com.felipegabrill.twitter.user_service.application.commands.UpdateUserCommand;
-import com.felipegabrill.twitter.user_service.domain.user.User;
+import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.CreateUserDTO;
+import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UpdateUserDTO;
+import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserResponseDTO;
+import com.felipegabrill.twitter.user_service.domain.user.projections.UserPreviewProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -10,13 +11,13 @@ import java.util.UUID;
 
 public interface UserUseCases {
 
-    User create(CreateUserCommand command);
+    UserResponseDTO create(CreateUserDTO userDTO);
 
-    User getByUsername(String username);
+    UserResponseDTO getByUsername(String username);
 
-    User getById(UUID id);
+    UserResponseDTO getById(UUID id);
 
-    User updateProfile(UpdateUserCommand command);
+    UserResponseDTO updateProfile(UUID id, UpdateUserDTO userDTO);
 
     void deactivate(UUID userId);
 
@@ -24,10 +25,6 @@ public interface UserUseCases {
 
     void decrementFollowersCount(UUID userId);
 
-    void incrementFollowingCount(UUID userId);
-
-    void decrementFollowingCount(UUID userId);
-
-    Page<User> searchUsers(String username, String name, Pageable pageable);
+    Page<UserPreviewProjection> searchUsers(String username, String name, Pageable pageable);
 
 }

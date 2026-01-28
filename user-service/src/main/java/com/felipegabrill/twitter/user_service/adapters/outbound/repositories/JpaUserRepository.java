@@ -1,6 +1,7 @@
 package com.felipegabrill.twitter.user_service.adapters.outbound.repositories;
 
 import com.felipegabrill.twitter.user_service.adapters.outbound.entities.JpaUserEntity;
+import com.felipegabrill.twitter.user_service.domain.user.projections.UserPreviewProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,7 +13,7 @@ public interface JpaUserRepository extends JpaRepository<JpaUserEntity, UUID> {
 
     Optional<JpaUserEntity> findByUsername(String username);
 
-    Page<JpaUserEntity> findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(
+    Page<UserPreviewProjection> findByUsernameContainingIgnoreCaseOrNameContainingIgnoreCase(
             String username, String name, Pageable pageable);
 
 }
