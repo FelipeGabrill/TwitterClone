@@ -26,7 +26,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserResponseDTO> insert(@Valid @RequestBody CreateUserDTO dto) {
+    public ResponseEntity<UserResponseDTO> insert(@Valid @ModelAttribute CreateUserDTO dto) {
         UserResponseDTO newDto = userUseCases.create(dto);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -36,7 +36,7 @@ public class UserController {
     }
 
     @GetMapping("/username/{username}")
-    public ResponseEntity<UserResponseDTO> getByLogin(
+    public ResponseEntity<UserResponseDTO> getByUsername(
             @PathVariable String username) {
         UserResponseDTO dto = userUseCases.getByUsername(username);
         return ResponseEntity.ok(dto);
@@ -49,7 +49,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody UpdateUserDTO dto) {
+    public ResponseEntity<UserResponseDTO> update(@PathVariable UUID id, @Valid @ModelAttribute UpdateUserDTO dto) {
         UserResponseDTO newDto = userUseCases.updateProfile(id, dto);
         return ResponseEntity.ok(newDto);
     }

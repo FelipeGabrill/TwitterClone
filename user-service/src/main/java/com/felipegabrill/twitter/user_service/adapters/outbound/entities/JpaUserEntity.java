@@ -10,7 +10,7 @@ import java.util.UUID;
 public class JpaUserEntity {
 
     @Id
-    @GeneratedValue
+    @Column(nullable = false)
     private UUID id;
 
     @Column(unique = true, nullable = false)

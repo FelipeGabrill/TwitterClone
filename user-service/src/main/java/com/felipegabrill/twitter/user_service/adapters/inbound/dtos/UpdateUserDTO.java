@@ -17,6 +17,9 @@ public class UpdateUserDTO {
     private MultipartFile profileImage;
     private MultipartFile bannerImage;
 
+    private Boolean isRemoveProfileImage;
+    private Boolean isRemoveBannerImage;
+
     public UpdateUserDTO() {
     }
 
@@ -58,5 +61,21 @@ public class UpdateUserDTO {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Boolean getRemoveProfileImage() {
+        return isRemoveProfileImage;
+    }
+
+    public void setRemoveProfileImage(Boolean removeProfileImage) {
+        isRemoveProfileImage = removeProfileImage;
+    }
+
+    public Boolean getRemoveBannerImage() {
+        return isRemoveBannerImage;
+    }
+
+    public void setRemoveBannerImage(Boolean removeBannerImage) {
+        isRemoveBannerImage = removeBannerImage;
     }
 }

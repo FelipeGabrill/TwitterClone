@@ -5,6 +5,7 @@ import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UpdateUserDT
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserResponseDTO;
 import com.felipegabrill.twitter.user_service.application.exceptions.ResourceNotFoundException;
 import com.felipegabrill.twitter.user_service.application.exceptions.UsernameAlreadyExistsException;
+import com.felipegabrill.twitter.user_service.application.usecases.S3UseCases;
 import com.felipegabrill.twitter.user_service.application.usecases.UserUseCases;
 import com.felipegabrill.twitter.user_service.domain.user.User;
 import com.felipegabrill.twitter.user_service.domain.user.projections.UserPreviewProjection;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -22,9 +24,11 @@ import java.util.UUID;
 public class UserUseCaseImpl implements UserUseCases {
 
     private final UserRepository userRepository;
+    private final S3UseCases s3UseCases;
 
-    public UserUseCaseImpl(UserRepository userRepository) {
+    public UserUseCaseImpl(UserRepository userRepository, S3UseCases s3UseCases) {
         this.userRepository = userRepository;
+        this.s3UseCases = s3UseCases;
     }
 
     @Transactional
@@ -32,18 +36,32 @@ public class UserUseCaseImpl implements UserUseCases {
     public UserResponseDTO create(CreateUserDTO createUserDTO) {
         validateUsernameDoesNotExist(createUserDTO.getUsername());
 
-        User user = new User(
-                null,
-                createUserDTO.getUsername(),
-                createUserDTO.getName(),
-                createUserDTO.getBio(),
-                createUserDTO.getLocation(),
-                "",
-                ""
-        );
+        User user = copyDtoToEntity(createUserDTO);
+        saveProfileImage(createUserDTO.getProfileImage(), user);
+        saveBannerImage(createUserDTO.getBannerImage(), user);
+
         user = userRepository.save(user);
         return new UserResponseDTO(user);
     }
+
+    private void saveProfileImage(MultipartFile profileImage, User user) {
+        if (profileImage == null || profileImage.isEmpty()) {
+            return;
+        }
+
+        String profileImageUrl = s3UseCases.uploadFile(profileImage, "users/profile", user.getId() + "-profile.jpg");
+        user.setProfileImageUrl(profileImageUrl);
+    }
+
+    private void saveBannerImage(MultipartFile bannerImage, User user) {
+        if (bannerImage == null || bannerImage.isEmpty()) {
+            return;
+        }
+
+        String bannerImageUrl = s3UseCases.uploadFile(bannerImage, "users/banner", user.getId() + "-banner.jpg");
+        user.setBannerImageUrl(bannerImageUrl);
+    }
+
 
     private void validateUsernameDoesNotExist(String username) {
         if (userRepository.existsByUsername(username)) {
@@ -88,12 +106,20 @@ public class UserUseCaseImpl implements UserUseCases {
             if (updateUserDTO.getLocation() != null) {
                 user.setLocation(updateUserDTO.getLocation());
             }
-//            if (updateUserDTO.getProfileImageUrl() != null) {
-//                user.setProfileImageUrl(updateUserDTO.getProfileImageUrl());
-//            }
-//            if (updateUserDTO.getBannerImageUrl() != null) {
-//                user.setBannerImageUrl(updateUserDTO.getBannerImageUrl());
-//            }
+
+            if (Boolean.TRUE.equals(updateUserDTO.getRemoveProfileImage())) {
+                removeProfileImage(user);
+            } else if (updateUserDTO.getProfileImage() != null) {
+                removeProfileImage(user);
+                saveProfileImage(updateUserDTO.getProfileImage(), user);
+            }
+
+            if (Boolean.TRUE.equals(updateUserDTO.getRemoveBannerImage())) {
+                removeBannerImage(user);
+            } else if (updateUserDTO.getBannerImage() != null) {
+                removeBannerImage(user);
+                saveBannerImage(updateUserDTO.getBannerImage(), user);
+            }
 
             user.setUpdatedAt(LocalDateTime.now());
 
@@ -101,6 +127,20 @@ public class UserUseCaseImpl implements UserUseCases {
             return new UserResponseDTO(updatedUser);
         } catch (EntityNotFoundException e) {
             throw new ResourceNotFoundException("Resource Not Found");
+        }
+    }
+
+    private void removeBannerImage(User user) {
+        if (user.getBannerImageUrl() != null && !user.getBannerImageUrl().isEmpty()) {
+            s3UseCases.deleteFile(user.getBannerImageUrl());
+            user.setBannerImageUrl(null);
+        }
+    }
+
+    private void removeProfileImage(User user) {
+        if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isEmpty()) {
+            s3UseCases.deleteFile(user.getProfileImageUrl());
+            user.setProfileImageUrl(null);
         }
     }
 
@@ -129,10 +169,26 @@ public class UserUseCaseImpl implements UserUseCases {
         userRepository.save(user);
     }
 
-
     @Transactional(readOnly = true)
     @Override
     public Page<UserPreviewProjection> searchUsers(String username, String name, Pageable pageable) {
         return userRepository.findByActiveTrueAndUsernameContainingIgnoreCaseOrActiveTrueAndNameContainingIgnoreCase(username, name, pageable);
     }
+
+    private User copyDtoToEntity(CreateUserDTO dto) {
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        user.setUsername(dto.getUsername());
+        user.setName(dto.getName());
+        user.setBio(dto.getBio());
+        user.setLocation(dto.getLocation());
+        user.setActive(true);
+        user.setFollowersCount(0);
+        user.setFollowingCount(0);
+        user.setTweetsCount(0);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setPrivate(false);
+        return user;
+    }
+
 }
