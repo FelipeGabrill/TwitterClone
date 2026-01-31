@@ -2,6 +2,7 @@ package com.felipegabrill.twitter.user_service.application.usecases.impl;
 
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.CreateUserDTO;
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UpdateUserDTO;
+import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserPreviewDTO;
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserResponseDTO;
 import com.felipegabrill.twitter.user_service.application.exceptions.ResourceNotFoundException;
 import com.felipegabrill.twitter.user_service.application.exceptions.UsernameAlreadyExistsException;
@@ -171,8 +172,10 @@ public class UserUseCaseImpl implements UserUseCases {
 
     @Transactional(readOnly = true)
     @Override
-    public Page<UserPreviewProjection> searchUsers(String username, String name, Pageable pageable) {
-        return userRepository.findByActiveTrueAndUsernameContainingIgnoreCaseOrActiveTrueAndNameContainingIgnoreCase(username, name, pageable);
+    public Page<UserPreviewDTO> searchUsers(String username, String name, Pageable pageable) {
+        Page<UserPreviewProjection> projections =  userRepository.findByActiveTrueAndUsernameContainingIgnoreCaseOrActiveTrueAndNameContainingIgnoreCase(username, name, pageable);
+        return projections.map(UserPreviewDTO::fromProjection);
+
     }
 
     private User copyDtoToEntity(CreateUserDTO dto) {

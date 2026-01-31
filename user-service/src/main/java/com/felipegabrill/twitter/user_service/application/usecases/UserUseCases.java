@@ -2,6 +2,7 @@ package com.felipegabrill.twitter.user_service.application.usecases;
 
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.CreateUserDTO;
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UpdateUserDTO;
+import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserPreviewDTO;
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserResponseDTO;
 import com.felipegabrill.twitter.user_service.domain.user.projections.UserPreviewProjection;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,6 @@ public interface UserUseCases {
 
     void decrementFollowersCount(UUID userId);
 
-    Page<UserPreviewProjection> searchUsers(String username, String name, Pageable pageable);
+    Page<UserPreviewDTO> searchUsers(String username, String name, Pageable pageable);
 
 }

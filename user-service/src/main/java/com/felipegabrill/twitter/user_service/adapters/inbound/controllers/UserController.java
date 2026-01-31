@@ -2,6 +2,7 @@ package com.felipegabrill.twitter.user_service.adapters.inbound.controllers;
 
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.CreateUserDTO;
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UpdateUserDTO;
+import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserPreviewDTO;
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserResponseDTO;
 import com.felipegabrill.twitter.user_service.domain.user.projections.UserPreviewProjection;
 import io.swagger.v3.oas.annotations.Operation;
@@ -132,7 +133,7 @@ public interface UserController {
             }
     )
     @GetMapping("/search")
-    ResponseEntity<Page<UserPreviewProjection>> searchUsers(
+    ResponseEntity<Page<UserPreviewDTO>> searchUsers(
             @Parameter(description = "Username to search") @RequestParam(required = false) String username,
             @Parameter(description = "Name to search") @RequestParam(required = false) String name,
             Pageable pageable

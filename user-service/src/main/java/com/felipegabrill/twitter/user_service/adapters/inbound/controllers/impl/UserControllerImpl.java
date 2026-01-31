@@ -3,6 +3,7 @@ package com.felipegabrill.twitter.user_service.adapters.inbound.controllers.impl
 import com.felipegabrill.twitter.user_service.adapters.inbound.controllers.UserController;
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.CreateUserDTO;
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UpdateUserDTO;
+import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserPreviewDTO;
 import com.felipegabrill.twitter.user_service.adapters.inbound.dtos.UserResponseDTO;
 import com.felipegabrill.twitter.user_service.application.usecases.UserUseCases;
 import com.felipegabrill.twitter.user_service.domain.user.projections.UserPreviewProjection;
@@ -73,12 +74,13 @@ public class UserControllerImpl implements UserController {
     }
 
     @Override
-    public ResponseEntity<Page<UserPreviewProjection>> searchUsers(
+    public ResponseEntity<Page<UserPreviewDTO>> searchUsers(
             @RequestParam(required = false)  String username,
             @RequestParam(required = false)  String name,
             Pageable pageable
     ) {
-        Page<UserPreviewProjection> result = userUseCases.searchUsers(username, name, pageable);
+        Page<UserPreviewDTO> result = userUseCases.searchUsers(username, name, pageable);
+
         return ResponseEntity.ok(result);
     }
 }
