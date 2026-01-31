@@ -1,4 +1,4 @@
-package com.felipegabrill.twitter.user_service.infrastructure.aws;
+package com.felipegabrill.twitter.user_service.infrastructure.config.aws;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
