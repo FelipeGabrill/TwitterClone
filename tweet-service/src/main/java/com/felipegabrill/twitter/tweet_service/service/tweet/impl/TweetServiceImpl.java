@@ -11,7 +11,7 @@ import com.felipegabrill.twitter.tweet_service.database.model.enums.TweetType;
 import com.felipegabrill.twitter.tweet_service.database.model.UserMention;
 import com.felipegabrill.twitter.tweet_service.database.repository.TweetRepository;
 import com.felipegabrill.twitter.tweet_service.service.tweet.ITweetService;
-import jakarta.persistence.EntityNotFoundException;
+import com.felipegabrill.twitter.tweet_service.service.tweet.exceptions.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,7 +54,7 @@ public class TweetServiceImpl implements ITweetService {
     public ReplyTweetResponseDTO replyTweet(UUID authorId, ReplyTweetDTO dto) {
 
         Tweet parent = tweetRepository.findById(dto.getReplyToTweetId())
-                .orElseThrow(() -> new RuntimeException("Tweet not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tweet not found"));
 
         UUID rootTweetId = parent.getRootTweetId() != null
                 ? parent.getRootTweetId()
@@ -82,7 +82,7 @@ public class TweetServiceImpl implements ITweetService {
     public RetweetResponseDTO retweet(UUID authorId, RetweetDTO dto) {
 
         Tweet tweet = tweetRepository.findById(dto.getTweetId())
-                .orElseThrow(() -> new RuntimeException("Tweet not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tweet not found"));
 
         Tweet tweetToIncrement;
         UUID retweetOfId;
@@ -91,7 +91,7 @@ public class TweetServiceImpl implements ITweetService {
         if (tweet.getType() == TweetType.RETWEET) {
             rootId = tweet.getRootTweetId() != null ? tweet.getRootTweetId() : tweet.getId();
             Tweet rootTweet = tweetRepository.findById(rootId)
-                    .orElseThrow(() -> new RuntimeException("Root tweet not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Root tweet not found"));
 
             tweetToIncrement = rootTweet;
             retweetOfId = rootTweet.getId();
@@ -119,7 +119,7 @@ public class TweetServiceImpl implements ITweetService {
     public QuoteTweetResponseDTO quoteTweet(UUID authorId, QuoteTweetDTO dto) {
 
         Tweet quotedTweet = tweetRepository.findById(dto.getTweetId())
-                .orElseThrow(() -> new RuntimeException("Tweet not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tweet not found"));
 
         Tweet rootTweet = getRootTweetAndIncrementCounter(quotedTweet);
 
@@ -142,10 +142,14 @@ public class TweetServiceImpl implements ITweetService {
     public void deleteTweet(UUID authorId, UUID tweetId) {
 
         Tweet tweet = tweetRepository.findById(tweetId)
-                .orElseThrow(() -> new RuntimeException("Tweet not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tweet not found"));
 
         if (!tweet.getAuthorId().equals(authorId)) {
-            throw new RuntimeException("You cannot delete this tweet");
+            throw new UnauthorizedActionException("You cannot delete this tweet");
+        }
+
+        if (Boolean.TRUE.equals(tweet.getDeleted())) {
+            throw new TweetDeletedException("Tweet deleted");
         }
 
         tweet.setDeleted(true);
@@ -159,10 +163,10 @@ public class TweetServiceImpl implements ITweetService {
     public BaseTweetResponseDTO getTweetById(UUID tweetId) {
 
         Tweet tweet = tweetRepository.findById(tweetId)
-                .orElseThrow(() -> new RuntimeException("Tweet not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tweet not found"));
 
         if (Boolean.TRUE.equals(tweet.getDeleted())) {
-            throw new RuntimeException("Tweet deleted");
+            throw new TweetDeletedException("Tweet deleted");
         }
 
         return switch (tweet.getType()) {
@@ -170,7 +174,7 @@ public class TweetServiceImpl implements ITweetService {
             case REPLY -> tweetMapper.toReplyResponse(tweet);
             case RETWEET -> tweetMapper.toRetweetResponse(tweet);
             case QUOTE -> tweetMapper.toQuoteResponse(tweet);
-            default -> throw new RuntimeException("Unknown tweet type");
+            default -> throw new UnknownTweetTypeException("Unknown tweet type");
         };
     }
 
@@ -178,7 +182,7 @@ public class TweetServiceImpl implements ITweetService {
     @Transactional
     public void likeTweet(UUID authorId, UUID tweetId) {
         if (!tweetRepository.existsById(tweetId)) {
-            throw new EntityNotFoundException("Tweet not found");
+            throw new ResourceNotFoundException("Tweet not found");
         }
         tweetRepository.incrementLikeCount(tweetId);
     }
@@ -187,7 +191,7 @@ public class TweetServiceImpl implements ITweetService {
     @Transactional
     public void unlikeTweet(UUID authorId, UUID tweetId) {
         if (!tweetRepository.existsById(tweetId)) {
-            throw new EntityNotFoundException("Tweet not found");
+            throw new ResourceNotFoundException("Tweet not found");
         }
         tweetRepository.decrementLikeCount(tweetId);
     }
@@ -206,7 +210,7 @@ public class TweetServiceImpl implements ITweetService {
         UUID rootId = tweet.getRootTweetId() != null ? tweet.getRootTweetId() : tweet.getId();
 
         Tweet rootTweet = tweetRepository.findById(rootId)
-                .orElseThrow(() -> new RuntimeException("Root tweet not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Root tweet not found"));
 
         rootTweet.setRetweetCount(rootTweet.getRetweetCount() + 1);
 
@@ -217,10 +221,10 @@ public class TweetServiceImpl implements ITweetService {
 
     private void validateHashtagsAndMentions(List<HashtagDTO> hashtags, List<UserMentionDTO> mentions) {
         if (hashtags != null && hashtags.size() > 5) {
-            throw new IllegalArgumentException("A tweet cannot have more than 5 hashtags");
+            throw new InvalidTweetException("A tweet cannot have more than 5 hashtags");
         }
         if (mentions != null && mentions.size() > 5) {
-            throw new IllegalArgumentException("A tweet cannot have more than 5 mentions");
+            throw new InvalidTweetException("A tweet cannot have more than 5 mentions");
         }
     }
 
@@ -237,7 +241,4 @@ public class TweetServiceImpl implements ITweetService {
                 .collect(Collectors.toList())
                 : new ArrayList<>());
     }
-
-
-
 }
