@@ -1,49 +1,47 @@
 package com.felipegabrill.twitter.tweet_service.service.tweet.impl;
 
-import com.felipegabrill.twitter.tweet_service.dtos.hashtag.HashtagDTO;
 import com.felipegabrill.twitter.tweet_service.dtos.tweet.*;
 import com.felipegabrill.twitter.tweet_service.dtos.tweet.response.*;
-import com.felipegabrill.twitter.tweet_service.dtos.usermention.UserMentionDTO;
 import com.felipegabrill.twitter.tweet_service.mapper.TweetMapper;
-import com.felipegabrill.twitter.tweet_service.database.model.Hashtag;
 import com.felipegabrill.twitter.tweet_service.database.model.Tweet;
 import com.felipegabrill.twitter.tweet_service.database.model.enums.TweetType;
-import com.felipegabrill.twitter.tweet_service.database.model.UserMention;
 import com.felipegabrill.twitter.tweet_service.database.repository.TweetRepository;
+import com.felipegabrill.twitter.tweet_service.service.tweet.IHashtagService;
 import com.felipegabrill.twitter.tweet_service.service.tweet.ITweetService;
+import com.felipegabrill.twitter.tweet_service.service.tweet.IUserMentionService;
 import com.felipegabrill.twitter.tweet_service.service.tweet.exceptions.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class TweetServiceImpl implements ITweetService {
 
     private final TweetRepository tweetRepository;
     private final TweetMapper tweetMapper;
+    private final IHashtagService hashtagService;
+    private final IUserMentionService userMentionService;
 
     public TweetServiceImpl(TweetRepository tweetRepository,
-                            TweetMapper tweetMapper) {
+                            TweetMapper tweetMapper, IHashtagService hashtagService, IUserMentionService userMentionService) {
         this.tweetRepository = tweetRepository;
         this.tweetMapper = tweetMapper;
+        this.hashtagService = hashtagService;
+        this.userMentionService = userMentionService;
     }
 
     @Override
     @Transactional
     public NormalTweetResponseDTO createTweet(UUID authorId, CreateTweetDTO dto) {
 
-        validateHashtagsAndMentions(dto.getHashtags(), dto.getUserMentions());
 
         Tweet tweet = tweetMapper.fromCreateDTO(dto, authorId);
 
-        populateHashtagsAndMentions(tweet, dto);
-
         initNewTweet(tweet, TweetType.NORMAL);
+
+        processHashtagsAndMentions(tweet, dto);
 
         tweetRepository.save(tweet);
         return tweetMapper.toNormalResponse(tweet);
@@ -60,11 +58,9 @@ public class TweetServiceImpl implements ITweetService {
                 ? parent.getRootTweetId()
                 : parent.getId();
 
-        validateHashtagsAndMentions(dto.getHashtags(), dto.getUserMentions());
-
         Tweet reply = tweetMapper.fromReplyDTO(dto, authorId);
 
-        populateHashtagsAndMentions(reply, dto);
+        processHashtagsAndMentions(reply, dto);
 
         initNewTweet(reply, TweetType.REPLY);
         reply.setReplyToId(parent.getId());
@@ -123,11 +119,9 @@ public class TweetServiceImpl implements ITweetService {
 
         Tweet rootTweet = getRootTweetAndIncrementCounter(quotedTweet);
 
-        validateHashtagsAndMentions(dto.getHashtags(), dto.getUserMentions());
-
         Tweet quote = tweetMapper.fromQuoteDTO(dto, authorId);
 
-        populateHashtagsAndMentions(quote, dto);
+        processHashtagsAndMentions(quote, dto);
 
         initNewTweet(quote, TweetType.QUOTE);
         quote.setRetweetOfId(quotedTweet.getId());
@@ -219,26 +213,11 @@ public class TweetServiceImpl implements ITweetService {
         return rootTweet;
     }
 
-    private void validateHashtagsAndMentions(List<HashtagDTO> hashtags, List<UserMentionDTO> mentions) {
-        if (hashtags != null && hashtags.size() > 5) {
-            throw new InvalidTweetException("A tweet cannot have more than 5 hashtags");
-        }
-        if (mentions != null && mentions.size() > 5) {
-            throw new InvalidTweetException("A tweet cannot have more than 5 mentions");
-        }
-    }
+    private void processHashtagsAndMentions(Tweet tweet, TweetWithEntities dto) {
+        hashtagService.validateHashtags(dto.getHashtags());
+        hashtagService.attachHashtagsToTweet(tweet, dto.getHashtags());
 
-    private void populateHashtagsAndMentions(Tweet tweet, TweetWithEntities dto) {
-        tweet.setHashtags(dto.getHashtags() != null
-                ? dto.getHashtags().stream()
-                .map(h -> new Hashtag(h.getText(), h.getStartIndex(), h.getEndIndex()))
-                .collect(Collectors.toList())
-                : new ArrayList<>());
-
-        tweet.setUserMentions(dto.getUserMentions() != null
-                ? dto.getUserMentions().stream()
-                .map(m -> new UserMention(m.getScreenName(), m.getUserId(), m.getStartIndex(), m.getEndIndex()))
-                .collect(Collectors.toList())
-                : new ArrayList<>());
+        userMentionService.validateMentions(dto.getUserMentions());
+        userMentionService.attachMentionsToTweet(tweet, dto.getUserMentions());
     }
 }
