@@ -5,6 +5,7 @@ import com.felipegabrill.twitter.tweet_service.dtos.tweet.QuoteTweetDTO;
 import com.felipegabrill.twitter.tweet_service.dtos.tweet.ReplyTweetDTO;
 import com.felipegabrill.twitter.tweet_service.dtos.tweet.RetweetDTO;
 import com.felipegabrill.twitter.tweet_service.dtos.tweet.response.*;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,25 +16,25 @@ public interface ITweetController {
     @PostMapping("/users/{authorId}/tweets")
     ResponseEntity<NormalTweetResponseDTO> createTweet(
             @PathVariable UUID authorId,
-            @ModelAttribute CreateTweetDTO createTweetDTO
+            @Valid @ModelAttribute CreateTweetDTO createTweetDTO
     );
 
     @PostMapping("/users/{authorId}/tweets/reply")
     ResponseEntity<ReplyTweetResponseDTO> replyTweet(
             @PathVariable UUID authorId,
-            @ModelAttribute ReplyTweetDTO replyTweetDTO
+            @Valid @ModelAttribute ReplyTweetDTO replyTweetDTO
     );
 
     @PostMapping("/users/{authorId}/tweets/retweet")
     ResponseEntity<RetweetResponseDTO> retweet(
             @PathVariable UUID authorId,
-            @ModelAttribute RetweetDTO retweetDTO
+            @Valid @ModelAttribute RetweetDTO retweetDTO
     );
 
     @PostMapping("/users/{authorId}/tweets/quote")
     ResponseEntity<QuoteTweetResponseDTO> quoteTweet(
             @PathVariable UUID authorId,
-            @ModelAttribute QuoteTweetDTO quoteTweetDTO
+            @Valid @ModelAttribute QuoteTweetDTO quoteTweetDTO
     );
 
     @PostMapping("/users/{authorId}/tweets/{tweetId}/like")

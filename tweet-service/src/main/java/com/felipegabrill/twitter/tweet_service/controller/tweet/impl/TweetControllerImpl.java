@@ -7,6 +7,7 @@ import com.felipegabrill.twitter.tweet_service.dtos.tweet.ReplyTweetDTO;
 import com.felipegabrill.twitter.tweet_service.dtos.tweet.RetweetDTO;
 import com.felipegabrill.twitter.tweet_service.dtos.tweet.response.*;
 import com.felipegabrill.twitter.tweet_service.service.tweet.ITweetService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class TweetControllerImpl implements ITweetController {
     @PostMapping("/users/{authorId}/tweets")
     public ResponseEntity<NormalTweetResponseDTO> createTweet(
             @PathVariable UUID authorId,
-            @ModelAttribute CreateTweetDTO createTweetDTO
+            @Valid @ModelAttribute CreateTweetDTO createTweetDTO
     ) {
         NormalTweetResponseDTO response = tweetService.createTweet(authorId, createTweetDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -37,7 +38,7 @@ public class TweetControllerImpl implements ITweetController {
     @PostMapping("/users/{authorId}/tweets/reply")
     public ResponseEntity<ReplyTweetResponseDTO> replyTweet(
             @PathVariable UUID authorId,
-            @ModelAttribute ReplyTweetDTO replyTweetDTO
+            @Valid @ModelAttribute ReplyTweetDTO replyTweetDTO
     ) {
         ReplyTweetResponseDTO response = tweetService.replyTweet(authorId, replyTweetDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -47,7 +48,7 @@ public class TweetControllerImpl implements ITweetController {
     @PostMapping("/users/{authorId}/tweets/retweet")
     public ResponseEntity<RetweetResponseDTO> retweet(
             @PathVariable UUID authorId,
-            @ModelAttribute RetweetDTO retweetDTO
+            @Valid @ModelAttribute RetweetDTO retweetDTO
     ) {
         RetweetResponseDTO response = tweetService.retweet(authorId, retweetDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -57,7 +58,7 @@ public class TweetControllerImpl implements ITweetController {
     @PostMapping("/users/{authorId}/tweets/quote")
     public ResponseEntity<QuoteTweetResponseDTO> quoteTweet(
             @PathVariable UUID authorId,
-            @ModelAttribute QuoteTweetDTO quoteTweetDTO
+            @Valid @ModelAttribute QuoteTweetDTO quoteTweetDTO
     ) {
         QuoteTweetResponseDTO response = tweetService.quoteTweet(authorId, quoteTweetDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
