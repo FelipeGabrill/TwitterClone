@@ -41,7 +41,7 @@ public class TweetServiceImpl implements ITweetService {
     @Override
     @Transactional
     public NormalTweetResponseDTO createTweet(UUID authorId, CreateTweetDTO dto) {
-
+        validateContentOrMedia(dto.getContent(), dto.getMedia());
 
         Tweet tweet = tweetMapper.fromCreateDTO(dto, authorId);
 
@@ -57,6 +57,7 @@ public class TweetServiceImpl implements ITweetService {
     @Override
     @Transactional
     public ReplyTweetResponseDTO replyTweet(UUID authorId, ReplyTweetDTO dto) {
+        validateContentOrMedia(dto.getContent(), dto.getMedia());
 
         Tweet parent = tweetRepository.findById(dto.getReplyToTweetId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tweet not found"));
@@ -121,6 +122,7 @@ public class TweetServiceImpl implements ITweetService {
     @Override
     @Transactional
     public QuoteTweetResponseDTO quoteTweet(UUID authorId, QuoteTweetDTO dto) {
+        validateContentOrMedia(dto.getContent(), dto.getMedia());
 
         Tweet quotedTweet = tweetRepository.findById(dto.getTweetId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tweet not found"));
@@ -234,11 +236,20 @@ public class TweetServiceImpl implements ITweetService {
         return rootTweet;
     }
 
+    private void validateContentOrMedia(String content, List<MultipartFile> media) {
+        boolean hasContent = content != null && !content.isBlank();
+        boolean hasMedia = media != null && !media.isEmpty();
+
+        if (!hasContent && !hasMedia) {
+            throw new InvalidTweetException(
+                    "Tweet must contain content or at least one media file"
+            );
+        }
+    }
+
     private void processHashtagsAndMentions(Tweet tweet, TweetWithEntities dto) {
-        hashtagService.validateHashtags(dto.getHashtags());
         hashtagService.attachHashtagsToTweet(tweet, dto.getHashtags());
 
-        userMentionService.validateMentions(dto.getUserMentions());
         userMentionService.attachMentionsToTweet(tweet, dto.getUserMentions());
     }
 }
