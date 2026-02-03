@@ -1,5 +1,6 @@
 package com.felipegabrill.twitter.tweet_service.service.tweet.impl;
 
+import com.felipegabrill.twitter.tweet_service.database.model.Media;
 import com.felipegabrill.twitter.tweet_service.dtos.tweet.*;
 import com.felipegabrill.twitter.tweet_service.dtos.tweet.response.*;
 import com.felipegabrill.twitter.tweet_service.mapper.TweetMapper;
@@ -7,13 +8,16 @@ import com.felipegabrill.twitter.tweet_service.database.model.Tweet;
 import com.felipegabrill.twitter.tweet_service.database.model.enums.TweetType;
 import com.felipegabrill.twitter.tweet_service.database.repository.TweetRepository;
 import com.felipegabrill.twitter.tweet_service.service.tweet.IHashtagService;
+import com.felipegabrill.twitter.tweet_service.service.tweet.IS3Service;
 import com.felipegabrill.twitter.tweet_service.service.tweet.ITweetService;
 import com.felipegabrill.twitter.tweet_service.service.tweet.IUserMentionService;
 import com.felipegabrill.twitter.tweet_service.service.tweet.exceptions.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -23,13 +27,15 @@ public class TweetServiceImpl implements ITweetService {
     private final TweetMapper tweetMapper;
     private final IHashtagService hashtagService;
     private final IUserMentionService userMentionService;
+    private final IS3Service s3Service;
 
     public TweetServiceImpl(TweetRepository tweetRepository,
-                            TweetMapper tweetMapper, IHashtagService hashtagService, IUserMentionService userMentionService) {
+                            TweetMapper tweetMapper, IHashtagService hashtagService, IUserMentionService userMentionService, IS3Service s3Service) {
         this.tweetRepository = tweetRepository;
         this.tweetMapper = tweetMapper;
         this.hashtagService = hashtagService;
         this.userMentionService = userMentionService;
+        this.s3Service = s3Service;
     }
 
     @Override
@@ -42,6 +48,7 @@ public class TweetServiceImpl implements ITweetService {
         initNewTweet(tweet, TweetType.NORMAL);
 
         processHashtagsAndMentions(tweet, dto);
+        saveTweetImages(dto.getMedia(), tweet);
 
         tweetRepository.save(tweet);
         return tweetMapper.toNormalResponse(tweet);
@@ -61,6 +68,7 @@ public class TweetServiceImpl implements ITweetService {
         Tweet reply = tweetMapper.fromReplyDTO(dto, authorId);
 
         processHashtagsAndMentions(reply, dto);
+        saveTweetImages(dto.getMedia(), reply);
 
         initNewTweet(reply, TweetType.REPLY);
         reply.setReplyToId(parent.getId());
@@ -122,6 +130,7 @@ public class TweetServiceImpl implements ITweetService {
         Tweet quote = tweetMapper.fromQuoteDTO(dto, authorId);
 
         processHashtagsAndMentions(quote, dto);
+        saveTweetImages(dto.getMedia(), quote);
 
         initNewTweet(quote, TweetType.QUOTE);
         quote.setRetweetOfId(quotedTweet.getId());
@@ -198,6 +207,18 @@ public class TweetServiceImpl implements ITweetService {
         tweet.setLikeCount(0);
         tweet.setReplyCount(0);
         tweet.setRetweetCount(0);
+    }
+
+    private void saveTweetImages(List<MultipartFile> medias, Tweet tweet) {
+        if (medias == null || medias.isEmpty()) {
+            return;
+        }
+
+        List<String> mediaUrls = s3Service.uploadFiles(medias, "tweets", tweet.getId());
+
+        for (int i = 0; i < mediaUrls.size(); i++) {
+            tweet.getMedia().add(new Media(mediaUrls.get(i), i + 1));
+        }
     }
 
     private Tweet getRootTweetAndIncrementCounter(Tweet tweet) {
