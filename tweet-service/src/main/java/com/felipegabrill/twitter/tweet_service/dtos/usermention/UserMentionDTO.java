@@ -1,11 +1,25 @@
 package com.felipegabrill.twitter.tweet_service.dtos.usermention;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+
 import java.util.UUID;
 
 public class UserMentionDTO {
+
+    @NotBlank(message = "Screen name cannot be blank")
     private String screenName;
+
+    @NotNull(message = "User id is required")
     private UUID userId;
+
+    @NotNull(message = "Start index is required")
+    @PositiveOrZero(message = "Start index must be zero or positive")
     private Integer startIndex;
+
+    @NotNull(message = "End index is required")
+    @PositiveOrZero(message = "End index must be zero or positive")
     private Integer endIndex;
 
     public UserMentionDTO() {}
