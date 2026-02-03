@@ -1,16 +1,16 @@
 package com.felipegabrill.twitter.tweet_service.database.model;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class Media {
 
-    @Column(name = "media_url", nullable = false, length = 500)
-    private final String mediaUrl;
+    private String mediaUrl;
 
-    @Column(name = "position", nullable = false)
-    private final int position;
+    private int position;
+
+    public Media() {
+    }
 
     public Media(String mediaUrl, int position) {
         this.mediaUrl = mediaUrl;
@@ -23,5 +23,13 @@ public class Media {
 
     public int getPosition() {
         return position;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
+    }
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
     }
 }
