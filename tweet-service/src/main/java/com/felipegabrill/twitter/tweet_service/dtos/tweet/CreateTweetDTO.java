@@ -2,13 +2,26 @@ package com.felipegabrill.twitter.tweet_service.dtos.tweet;
 
 import com.felipegabrill.twitter.tweet_service.dtos.hashtag.HashtagDTO;
 import com.felipegabrill.twitter.tweet_service.dtos.usermention.UserMentionDTO;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
+@Schema(
+        name = "CreateTweetDTO",
+        description = "DTO used to create a normal tweet. A tweet must contain at least text content or media."
+)
 public class CreateTweetDTO implements TweetWithEntities {
 
+    @Schema(
+            description = "Text content of the tweet",
+            example = "Hello Twitter!",
+            minLength = 1,
+            maxLength = 280
+    )
     @Size(
             min = 1,
             max = 280,
@@ -16,6 +29,7 @@ public class CreateTweetDTO implements TweetWithEntities {
     )
     private String content;
 
+    @Schema(hidden = true)
     @Size(
             max = 4,
             message = "A tweet can contain at most 4 media files"
@@ -39,9 +53,12 @@ public class CreateTweetDTO implements TweetWithEntities {
     public CreateTweetDTO() {
     }
 
-    public CreateTweetDTO(String content, List<MultipartFile> media,
-                          List<HashtagDTO> hashtags,
-                          List<UserMentionDTO> userMentions) {
+    public CreateTweetDTO(
+            String content,
+            List<MultipartFile> media,
+            List<HashtagDTO> hashtags,
+            List<UserMentionDTO> userMentions
+    ) {
         this.content = content;
         this.media = media;
         this.hashtags = hashtags;

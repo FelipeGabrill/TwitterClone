@@ -2,6 +2,8 @@ package com.felipegabrill.twitter.tweet_service.dtos.tweet;
 
 import com.felipegabrill.twitter.tweet_service.dtos.hashtag.HashtagDTO;
 import com.felipegabrill.twitter.tweet_service.dtos.usermention.UserMentionDTO;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import org.springframework.web.multipart.MultipartFile;
@@ -9,8 +11,18 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
+@Schema(
+        name = "QuoteTweetDTO",
+        description = "DTO used to create a quote tweet. A quote tweet must reference an existing tweet and contain text content and/or media."
+)
 public class QuoteTweetDTO extends RetweetDTO implements TweetWithEntities {
 
+    @Schema(
+            description = "Text content added to the quoted tweet",
+            example = "This is my opinion about this tweet",
+            minLength = 1,
+            maxLength = 280
+    )
     @Size(
             min = 1,
             max = 280,
@@ -18,6 +30,7 @@ public class QuoteTweetDTO extends RetweetDTO implements TweetWithEntities {
     )
     private String content;
 
+    @Schema(hidden = true)
     @Size(
             max = 4,
             message = "A tweet can contain at most 4 media files"
@@ -42,8 +55,13 @@ public class QuoteTweetDTO extends RetweetDTO implements TweetWithEntities {
         super();
     }
 
-    public QuoteTweetDTO(UUID tweetId, String content, List<MultipartFile> media,
-                         List<HashtagDTO> hashtags, List<UserMentionDTO> userMentions) {
+    public QuoteTweetDTO(
+            UUID tweetId,
+            String content,
+            List<MultipartFile> media,
+            List<HashtagDTO> hashtags,
+            List<UserMentionDTO> userMentions
+    ) {
         super(tweetId);
         this.content = content;
         this.media = media;
