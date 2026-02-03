@@ -2,6 +2,7 @@ package com.felipegabrill.twitter.tweet_service.dtos.tweet.response;
 
 import com.felipegabrill.twitter.tweet_service.database.model.enums.TweetType;
 import com.felipegabrill.twitter.tweet_service.dtos.hashtag.HashtagDTO;
+import com.felipegabrill.twitter.tweet_service.dtos.media.MediaDTO;
 import com.felipegabrill.twitter.tweet_service.dtos.usermention.UserMentionDTO;
 
 import java.time.Instant;
@@ -14,7 +15,7 @@ public class ReplyTweetResponseDTO extends BaseTweetResponseDTO {
     private final UUID replyToId;
     private final UUID rootTweetId;
     private final String content;
-    private final List<String> mediaUrls;
+    private final List<MediaDTO> media;
     private final List<HashtagDTO> hashtags;
     private final List<UserMentionDTO> userMentions;
     private final Integer retweetCount;
@@ -28,7 +29,7 @@ public class ReplyTweetResponseDTO extends BaseTweetResponseDTO {
             UUID replyToId,
             UUID rootTweetId,
             String content,
-            List<String> mediaUrls,
+            List<MediaDTO> media,
             List<HashtagDTO> hashtags,
             List<UserMentionDTO> userMentions, Integer retweetCount, Integer replyCount
     ) {
@@ -36,7 +37,7 @@ public class ReplyTweetResponseDTO extends BaseTweetResponseDTO {
         this.replyToId = replyToId;
         this.rootTweetId = rootTweetId;
         this.content = content;
-        this.mediaUrls = mediaUrls;
+        this.media = media;
         this.hashtags = hashtags;
         this.userMentions = userMentions;
         this.retweetCount = retweetCount;
@@ -59,8 +60,8 @@ public class ReplyTweetResponseDTO extends BaseTweetResponseDTO {
         return content;
     }
 
-    public List<String> getMediaUrls() {
-        return mediaUrls;
+    public List<MediaDTO> getMedia() {
+        return media;
     }
 
     public List<HashtagDTO> getHashtags() {
