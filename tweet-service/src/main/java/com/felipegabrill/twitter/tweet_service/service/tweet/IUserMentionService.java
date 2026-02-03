@@ -8,8 +8,6 @@ import java.util.List;
 
 public interface IUserMentionService {
 
-    void validateMentions(List<UserMentionDTO> mentions);
-
     List<UserMention> createMentions(List<UserMentionDTO> mentions, Tweet tweet);
 
     void attachMentionsToTweet(Tweet tweet, List<UserMentionDTO> mentions);

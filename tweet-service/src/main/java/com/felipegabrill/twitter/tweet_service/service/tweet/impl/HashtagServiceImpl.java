@@ -4,7 +4,6 @@ import com.felipegabrill.twitter.tweet_service.database.model.Hashtag;
 import com.felipegabrill.twitter.tweet_service.database.model.Tweet;
 import com.felipegabrill.twitter.tweet_service.dtos.hashtag.HashtagDTO;
 import com.felipegabrill.twitter.tweet_service.service.tweet.IHashtagService;
-import com.felipegabrill.twitter.tweet_service.service.tweet.exceptions.InvalidTweetException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,12 +12,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class HashtagServiceImpl implements IHashtagService {
-    @Override
-    public void validateHashtags(List<HashtagDTO> hashtags) {
-        if (hashtags != null && hashtags.size() > 5) {
-            throw new InvalidTweetException("A tweet cannot have more than 5 hashtags");
-        }
-    }
 
     @Override
     public List<Hashtag> createHashtags(List<HashtagDTO> hashtags, Tweet tweet) {

@@ -15,13 +15,6 @@ import java.util.stream.Collectors;
 public class UserMentionServiceImpl implements IUserMentionService {
 
     @Override
-    public void validateMentions(List<UserMentionDTO> mentions) {
-        if (mentions != null && mentions.size() > 5) {
-            throw new InvalidTweetException("A tweet cannot have more than 5 mentions");
-        }
-    }
-
-    @Override
     public List<UserMention> createMentions(List<UserMentionDTO> mentions, Tweet tweet) {
         if (mentions == null) {
             return new ArrayList<>();
