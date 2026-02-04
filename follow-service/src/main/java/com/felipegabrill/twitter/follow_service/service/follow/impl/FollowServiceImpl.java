@@ -5,6 +5,9 @@ import com.felipegabrill.twitter.follow_service.database.repository.FollowReposi
 import com.felipegabrill.twitter.follow_service.dtos.follow.FollowResponseDTO;
 import com.felipegabrill.twitter.follow_service.mapper.FollowMapper;
 import com.felipegabrill.twitter.follow_service.service.follow.IFollowService;
+import com.felipegabrill.twitter.follow_service.service.follow.exceptions.AlreadyFollowingException;
+import com.felipegabrill.twitter.follow_service.service.follow.exceptions.NotFollowingException;
+import com.felipegabrill.twitter.follow_service.service.follow.exceptions.UserCannotFollowSelfException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,7 +42,7 @@ public class FollowServiceImpl implements IFollowService {
     @Transactional
     public void unfollowUser(UUID followerId, UUID followingId) {
         if (!followRepository.existsByFollowerIdAndFollowingId(followerId, followingId)) {
-            throw new IllegalStateException("User is not following the target.");
+            throw new NotFollowingException("User is not following the target");
         }
         followRepository.deleteByFollowerIdAndFollowingId(followerId, followingId);
     }
@@ -58,6 +61,7 @@ public class FollowServiceImpl implements IFollowService {
                 .map(followMapper::toDTO);
     }
 
+
     @Override
     @Transactional(readOnly = true)
     public boolean isFollowing(UUID followerId, UUID followingId) {
@@ -74,10 +78,10 @@ public class FollowServiceImpl implements IFollowService {
 
     private void validateFollow(UUID followerId, UUID followingId) {
         if (followerId.equals(followingId)) {
-            throw new IllegalArgumentException("User cannot follow themselves.");
+            throw new UserCannotFollowSelfException("User cannot follow themselves");
         }
         if (followRepository.existsByFollowerIdAndFollowingId(followerId, followingId)) {
-            throw new IllegalStateException("User is already following the target.");
+            throw new AlreadyFollowingException("User is already following the target");
         }
     }
 }
