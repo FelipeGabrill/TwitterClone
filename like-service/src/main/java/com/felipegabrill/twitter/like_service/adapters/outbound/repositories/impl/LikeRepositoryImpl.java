@@ -30,7 +30,7 @@ public class LikeRepositoryImpl implements LikeRepository {
     @Override
     public Like save(Like like) {
         JpaLikeEntity entity = likeMapper.toEntity(like);
-        JpaLikeEntity saved = jpaLikeRepository.save(entity);
+        JpaLikeEntity saved = jpaLikeRepository.saveAndFlush(entity);
         return likeMapper.toDomain(saved);
     }
 
