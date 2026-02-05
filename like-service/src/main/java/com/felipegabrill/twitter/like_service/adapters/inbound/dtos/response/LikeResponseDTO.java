@@ -1,15 +1,24 @@
 package com.felipegabrill.twitter.like_service.adapters.inbound.dtos.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.Instant;
 import java.util.UUID;
 
+@Schema(description = "Like response representation")
 public class LikeResponseDTO {
 
-    private UUID userId;
-    private Instant createdAt;
+    @Schema(
+            description = "ID of the user who liked the tweet",
+            example = "123e4567-e89b-12d3-a456-426614174000"
+    )
+    private final UUID userId;
 
-    public LikeResponseDTO() {
-    }
+    @Schema(
+            description = "Timestamp when the like was created",
+            example = "2026-02-05T02:30:00Z"
+    )
+    private final Instant createdAt;
 
     public LikeResponseDTO(UUID userId, Instant createdAt) {
         this.userId = userId;
