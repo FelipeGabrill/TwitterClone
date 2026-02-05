@@ -2,6 +2,8 @@ package com.felipegabrill.twitter.like_service.application.usecases.impl;
 
 import com.felipegabrill.twitter.like_service.adapters.inbound.dtos.response.LikeResponseDTO;
 import com.felipegabrill.twitter.like_service.adapters.inbound.dtos.response.LikeStatusResponseDTO;
+import com.felipegabrill.twitter.like_service.application.exceptions.LikeAlreadyExistsException;
+import com.felipegabrill.twitter.like_service.application.exceptions.ResourceNotFoundException;
 import com.felipegabrill.twitter.like_service.application.usecases.LikeUseCases;
 import com.felipegabrill.twitter.like_service.domain.like.Like;
 import com.felipegabrill.twitter.like_service.domain.like.repository.LikeRepository;
@@ -26,13 +28,14 @@ public class LikeUseCasesImpl implements LikeUseCases {
     @Transactional
     @Override
     public void like(UUID userId, UUID tweetId) {
-        boolean alreadyLiked = hasLiked(tweetId, userId).isLiked();
-        if (alreadyLiked) {
-            throw new RuntimeException("User already liked this tweet");
+        try {
+            Like like = createLike(userId, tweetId);
+            likeRepository.save(like);
+        } catch (DataIntegrityViolationException e) {
+            throw new LikeAlreadyExistsException(
+                    "User " + userId + " already liked tweet " + tweetId
+            );
         }
-
-        Like like = createLike(userId, tweetId);
-        likeRepository.save(like);
     }
 
     @Transactional
@@ -40,7 +43,9 @@ public class LikeUseCasesImpl implements LikeUseCases {
     public void unlike(UUID userId, UUID tweetId) {
         int deleted = likeRepository.deleteByTweetIdAndUserId(tweetId, userId);
         if (deleted == 0) {
-            throw new RuntimeException("Like not found");
+            throw new ResourceNotFoundException(
+                    "Like not found for user " + userId + " and tweet " + tweetId
+            );
         }
     }
 
