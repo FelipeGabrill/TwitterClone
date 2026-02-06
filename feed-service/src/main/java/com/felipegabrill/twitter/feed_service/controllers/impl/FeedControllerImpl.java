@@ -1,13 +1,13 @@
 package com.felipegabrill.twitter.feed_service.controllers.impl;
 
-import com.felipegabrill.twitter.feed_service.controllers.FeedController;
+import com.felipegabrill.twitter.feed_service.controllers.IFeedController;
 import com.felipegabrill.twitter.feed_service.dtos.response.FeedResponseDTO;
 import com.felipegabrill.twitter.feed_service.services.IFeedService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/feed")
-public class FeedControllerImpl implements FeedController {
+public class FeedControllerImpl implements IFeedController {
 
     private final IFeedService feedUseCases;
 
@@ -19,7 +19,7 @@ public class FeedControllerImpl implements FeedController {
     @Override
     public FeedResponseDTO getUserFeed(
             @PathVariable String userId,
-            @RequestParam Integer limit,
+            @RequestParam(defaultValue = "20") Integer limit,
             @RequestParam(required = false) String lastKey
     ) {
         return feedUseCases.getUserFeed(userId, limit, lastKey);
@@ -28,7 +28,7 @@ public class FeedControllerImpl implements FeedController {
     @GetMapping("/global")
     @Override
     public FeedResponseDTO getGlobalFeed(
-            @RequestParam Integer limit,
+            @RequestParam(defaultValue = "20") Integer limit,
             @RequestParam(required = false) String lastKey
     ) {
         return feedUseCases.getGlobalFeed(limit, lastKey);
