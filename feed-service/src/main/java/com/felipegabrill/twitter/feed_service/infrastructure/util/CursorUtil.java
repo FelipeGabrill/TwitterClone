@@ -2,6 +2,8 @@ package com.felipegabrill.twitter.feed_service.infrastructure.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.felipegabrill.twitter.feed_service.infrastructure.util.exception.CursorDecodeException;
+import com.felipegabrill.twitter.feed_service.infrastructure.util.exception.CursorEncodeException;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.Base64;
@@ -18,11 +20,11 @@ public class CursorUtil {
         }
         try {
             Map<String, String> temp = new HashMap<>();
-            map.forEach((k, v) -> temp.put(k, v.s())); // apenas strings (PK/SK)
+            map.forEach((k, v) -> temp.put(k, v.s()));
             String json = mapper.writeValueAsString(temp);
             return Base64.getEncoder().encodeToString(json.getBytes());
         } catch (Exception e) {
-            throw new RuntimeException("Failed to encode cursor", e);
+            throw new CursorEncodeException("Failed to encode pagination cursor");
         }
     }
 
@@ -37,7 +39,7 @@ public class CursorUtil {
             temp.forEach((k, v) -> result.put(k, AttributeValue.builder().s(v).build()));
             return result;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to decode cursor", e);
+            throw new CursorDecodeException("Invalid or corrupted pagination cursor");
         }
     }
 }
