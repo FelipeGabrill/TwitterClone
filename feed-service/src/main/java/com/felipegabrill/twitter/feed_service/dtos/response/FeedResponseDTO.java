@@ -1,12 +1,24 @@
 package com.felipegabrill.twitter.feed_service.dtos.response;
 
 import com.felipegabrill.twitter.feed_service.dtos.FeedItemDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
+@Schema(description = "Paginated feed response")
 public class FeedResponseDTO {
 
+    @Schema(
+            description = "List of feed items",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private List<FeedItemDTO> items;
+
+    @Schema(
+            description = "Cursor used to fetch the next page of results",
+            example = "eyJQSyI6IlVTRVIjMTIzIiwiU0siOiIxNzA3MjAwMDAwIn0=",
+            nullable = true
+    )
     private String nextCursor;
 
     public FeedResponseDTO() {
