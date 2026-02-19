@@ -2,10 +2,12 @@ package com.felipegabrill.twitter.feed_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(exclude = {
         io.awspring.cloud.autoconfigure.dynamodb.DynamoDbAutoConfiguration.class
 })
+@EnableScheduling
 public class FeedServiceApplication {
 
 	public static void main(String[] args) {

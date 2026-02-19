@@ -32,11 +32,17 @@ public interface IFeedController {
             @Parameter(description = "User identifier", required = true)
             @PathVariable String userId,
 
-            @Parameter(description = "Maximum number of items to return", example = "20")
+            @Parameter(
+                    description = "Maximum number of items to return (default 20, max 100)",
+                    example = "20"
+            )
             @RequestParam(defaultValue = "20") Integer limit,
 
-            @Parameter(description = "Pagination cursor returned from the previous request")
-            @RequestParam(required = false) String lastKey
+            @Parameter(description = "RDS pagination cursor returned from the previous request")
+            @RequestParam(required = false) String lastRdsKey,
+
+            @Parameter(description = "DynamoDB pagination cursor returned from the previous request")
+            @RequestParam(required = false) String lastDynamoKey
     );
 
     @Operation(
@@ -50,7 +56,10 @@ public interface IFeedController {
     })
     @GetMapping("/global")
     FeedResponseDTO getGlobalFeed(
-            @Parameter(description = "Maximum number of items to return", example = "20")
+            @Parameter(
+                    description = "Maximum number of items to return (default 20, max 100)",
+                    example = "20"
+            )
             @RequestParam(defaultValue = "20") Integer limit,
 
             @Parameter(description = "Pagination cursor returned from the previous request")
