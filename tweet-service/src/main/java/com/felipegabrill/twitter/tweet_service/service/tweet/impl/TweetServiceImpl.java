@@ -1,17 +1,20 @@
 package com.felipegabrill.twitter.tweet_service.service.tweet.impl;
 
 import com.felipegabrill.twitter.tweet_service.database.model.Media;
-import com.felipegabrill.twitter.tweet_service.dtos.tweet.*;
-import com.felipegabrill.twitter.tweet_service.dtos.tweet.response.*;
-import com.felipegabrill.twitter.tweet_service.mapper.TweetMapper;
 import com.felipegabrill.twitter.tweet_service.database.model.Tweet;
 import com.felipegabrill.twitter.tweet_service.database.model.enums.TweetType;
 import com.felipegabrill.twitter.tweet_service.database.repository.TweetRepository;
+import com.felipegabrill.twitter.tweet_service.dtos.tweet.*;
+import com.felipegabrill.twitter.tweet_service.dtos.tweet.response.*;
+import com.felipegabrill.twitter.tweet_service.mapper.TweetMapper;
+import com.felipegabrill.twitter.tweet_service.service.aws.IS3Service;
+import com.felipegabrill.twitter.tweet_service.publisher.ITweetPublisher;
+import com.felipegabrill.twitter.tweet_service.service.exceptions.*;
 import com.felipegabrill.twitter.tweet_service.service.tweet.IHashtagService;
-import com.felipegabrill.twitter.tweet_service.service.tweet.IS3Service;
 import com.felipegabrill.twitter.tweet_service.service.tweet.ITweetService;
 import com.felipegabrill.twitter.tweet_service.service.tweet.IUserMentionService;
-import com.felipegabrill.twitter.tweet_service.service.tweet.exceptions.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,40 +26,75 @@ import java.util.UUID;
 @Service
 public class TweetServiceImpl implements ITweetService {
 
+    private static final Logger log = LoggerFactory.getLogger(TweetServiceImpl.class);
+
     private final TweetRepository tweetRepository;
     private final TweetMapper tweetMapper;
     private final IHashtagService hashtagService;
     private final IUserMentionService userMentionService;
     private final IS3Service s3Service;
+    private final ITweetPublisher tweetPublisher;
 
-    public TweetServiceImpl(TweetRepository tweetRepository,
-                            TweetMapper tweetMapper, IHashtagService hashtagService, IUserMentionService userMentionService, IS3Service s3Service) {
+    public TweetServiceImpl(
+            TweetRepository tweetRepository,
+            TweetMapper tweetMapper,
+            IHashtagService hashtagService,
+            IUserMentionService userMentionService,
+            IS3Service s3Service,
+            ITweetPublisher tweetPublisher
+    ) {
         this.tweetRepository = tweetRepository;
         this.tweetMapper = tweetMapper;
         this.hashtagService = hashtagService;
         this.userMentionService = userMentionService;
         this.s3Service = s3Service;
+        this.tweetPublisher = tweetPublisher;
     }
+
 
     @Override
     @Transactional
     public NormalTweetResponseDTO createTweet(UUID authorId, CreateTweetDTO dto) {
+
+        log.info("Creating tweet | authorId={}", authorId);
+
         validateContentOrMedia(dto.getContent(), dto.getMedia());
 
         Tweet tweet = tweetMapper.fromCreateDTO(dto, authorId);
-
         initNewTweet(tweet, TweetType.NORMAL);
 
         processHashtagsAndMentions(tweet, dto);
         saveTweetImages(dto.getMedia(), tweet);
 
         tweetRepository.save(tweet);
+
+        tweetPublisher.sendMessage(
+                tweet.getId(),
+                tweet.getAuthorId(),
+                tweet.getType(),
+                null
+        );
+
+        log.info(
+                "Tweet created successfully | tweetId={} | authorId={}",
+                tweet.getId(),
+                authorId
+        );
+
         return tweetMapper.toNormalResponse(tweet);
     }
+
 
     @Override
     @Transactional
     public ReplyTweetResponseDTO replyTweet(UUID authorId, ReplyTweetDTO dto) {
+
+        log.info(
+                "Creating reply tweet | authorId={} | replyToTweetId={}",
+                authorId,
+                dto.getReplyToTweetId()
+        );
+
         validateContentOrMedia(dto.getContent(), dto.getMedia());
 
         Tweet parent = tweetRepository.findById(dto.getReplyToTweetId())
@@ -79,12 +117,33 @@ public class TweetServiceImpl implements ITweetService {
 
         tweetRepository.save(parent);
         tweetRepository.save(reply);
+
+        tweetPublisher.sendMessage(
+                reply.getId(),
+                reply.getAuthorId(),
+                reply.getType(),
+                reply.getRootTweetId()
+        );
+
+        log.info(
+                "Reply tweet created | tweetId={} | rootTweetId={}",
+                reply.getId(),
+                rootTweetId
+        );
+
         return tweetMapper.toReplyResponse(reply);
     }
+
 
     @Override
     @Transactional
     public RetweetResponseDTO retweet(UUID authorId, RetweetDTO dto) {
+
+        log.info(
+                "Creating retweet | authorId={} | originalTweetId={}",
+                authorId,
+                dto.getTweetId()
+        );
 
         Tweet tweet = tweetRepository.findById(dto.getTweetId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tweet not found"));
@@ -115,6 +174,20 @@ public class TweetServiceImpl implements ITweetService {
         retweet.setRootTweetId(rootId);
 
         tweetRepository.save(retweet);
+
+        tweetPublisher.sendMessage(
+                retweet.getId(),
+                retweet.getAuthorId(),
+                retweet.getType(),
+                retweet.getRootTweetId()
+        );
+
+        log.info(
+                "Retweet created | tweetId={} | rootTweetId={}",
+                retweet.getId(),
+                rootId
+        );
+
         return tweetMapper.toRetweetResponse(retweet);
     }
 
@@ -122,6 +195,13 @@ public class TweetServiceImpl implements ITweetService {
     @Override
     @Transactional
     public QuoteTweetResponseDTO quoteTweet(UUID authorId, QuoteTweetDTO dto) {
+
+        log.info(
+                "Creating quote tweet | authorId={} | quotedTweetId={}",
+                authorId,
+                dto.getTweetId()
+        );
+
         validateContentOrMedia(dto.getContent(), dto.getMedia());
 
         Tweet quotedTweet = tweetRepository.findById(dto.getTweetId())
@@ -139,12 +219,33 @@ public class TweetServiceImpl implements ITweetService {
         quote.setRootTweetId(rootTweet.getId());
 
         tweetRepository.save(quote);
+
+        tweetPublisher.sendMessage(
+                quote.getId(),
+                quote.getAuthorId(),
+                quote.getType(),
+                quote.getRootTweetId()
+        );
+
+        log.info(
+                "Quote tweet created | tweetId={} | rootTweetId={}",
+                quote.getId(),
+                rootTweet.getId()
+        );
+
         return tweetMapper.toQuoteResponse(quote);
     }
+
 
     @Override
     @Transactional
     public void deleteTweet(UUID authorId, UUID tweetId) {
+
+        log.info(
+                "Deleting tweet | tweetId={} | authorId={}",
+                tweetId,
+                authorId
+        );
 
         Tweet tweet = tweetRepository.findById(tweetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tweet not found"));
@@ -161,11 +262,16 @@ public class TweetServiceImpl implements ITweetService {
         tweet.setDeletedAt(Instant.now());
 
         tweetRepository.save(tweet);
+
+        log.info("Tweet deleted | tweetId={}", tweetId);
     }
+
 
     @Override
     @Transactional(readOnly = true)
     public BaseTweetResponseDTO getTweetById(UUID tweetId) {
+
+        log.debug("Fetching tweet | tweetId={}", tweetId);
 
         Tweet tweet = tweetRepository.findById(tweetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tweet not found"));
@@ -183,23 +289,33 @@ public class TweetServiceImpl implements ITweetService {
         };
     }
 
+
     @Override
     @Transactional
-    public void likeTweet(UUID authorId, UUID tweetId) {
+    public void likeTweet(UUID tweetId) {
+
+        log.debug("Liking tweet | tweetId={} ", tweetId);
+
         if (!tweetRepository.existsById(tweetId)) {
             throw new ResourceNotFoundException("Tweet not found");
         }
+
         tweetRepository.incrementLikeCount(tweetId);
     }
 
     @Override
     @Transactional
-    public void unlikeTweet(UUID authorId, UUID tweetId) {
+    public void unlikeTweet(UUID tweetId) {
+
+        log.debug("Unliking tweet | tweetId={} ", tweetId);
+
         if (!tweetRepository.existsById(tweetId)) {
             throw new ResourceNotFoundException("Tweet not found");
         }
+
         tweetRepository.decrementLikeCount(tweetId);
     }
+
 
     private void initNewTweet(Tweet tweet, TweetType type) {
         tweet.setId(UUID.randomUUID());
@@ -212,31 +328,47 @@ public class TweetServiceImpl implements ITweetService {
     }
 
     private void saveTweetImages(List<MultipartFile> medias, Tweet tweet) {
+
         if (medias == null || medias.isEmpty()) {
             return;
         }
 
-        List<String> mediaUrls = s3Service.uploadFiles(medias, "tweets", tweet.getId());
+        log.debug(
+                "Uploading tweet media | tweetId={} | mediaCount={}",
+                tweet.getId(),
+                medias.size()
+        );
+
+        List<String> mediaUrls = s3Service.uploadFiles(
+                medias,
+                "tweets",
+                tweet.getId()
+        );
 
         for (int i = 0; i < mediaUrls.size(); i++) {
-            tweet.getMedia().add(new Media(mediaUrls.get(i), i + 1));
+            tweet.getMedia().add(
+                    new Media(mediaUrls.get(i), i + 1)
+            );
         }
     }
 
     private Tweet getRootTweetAndIncrementCounter(Tweet tweet) {
-        UUID rootId = tweet.getRootTweetId() != null ? tweet.getRootTweetId() : tweet.getId();
+
+        UUID rootId = tweet.getRootTweetId() != null
+                ? tweet.getRootTweetId()
+                : tweet.getId();
 
         Tweet rootTweet = tweetRepository.findById(rootId)
                 .orElseThrow(() -> new ResourceNotFoundException("Root tweet not found"));
 
         rootTweet.setRetweetCount(rootTweet.getRetweetCount() + 1);
-
         tweetRepository.save(rootTweet);
 
         return rootTweet;
     }
 
     private void validateContentOrMedia(String content, List<MultipartFile> media) {
+
         boolean hasContent = content != null && !content.isBlank();
         boolean hasMedia = media != null && !media.isEmpty();
 
@@ -249,7 +381,6 @@ public class TweetServiceImpl implements ITweetService {
 
     private void processHashtagsAndMentions(Tweet tweet, TweetWithEntities dto) {
         hashtagService.attachHashtagsToTweet(tweet, dto.getHashtags());
-
         userMentionService.attachMentionsToTweet(tweet, dto.getUserMentions());
     }
 }
