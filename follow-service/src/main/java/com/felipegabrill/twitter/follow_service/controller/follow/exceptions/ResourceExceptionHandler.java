@@ -1,8 +1,8 @@
 package com.felipegabrill.twitter.follow_service.controller.follow.exceptions;
 
-import com.felipegabrill.twitter.follow_service.service.follow.exceptions.AlreadyFollowingException;
-import com.felipegabrill.twitter.follow_service.service.follow.exceptions.NotFollowingException;
-import com.felipegabrill.twitter.follow_service.service.follow.exceptions.UserCannotFollowSelfException;
+import com.felipegabrill.twitter.follow_service.service.exceptions.AlreadyFollowingException;
+import com.felipegabrill.twitter.follow_service.service.exceptions.NotFollowingException;
+import com.felipegabrill.twitter.follow_service.service.exceptions.UserCannotFollowSelfException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
