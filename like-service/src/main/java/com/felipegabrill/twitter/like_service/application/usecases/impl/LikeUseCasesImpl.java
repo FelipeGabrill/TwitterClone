@@ -5,8 +5,11 @@ import com.felipegabrill.twitter.like_service.adapters.inbound.dtos.response.Lik
 import com.felipegabrill.twitter.like_service.application.exceptions.LikeAlreadyExistsException;
 import com.felipegabrill.twitter.like_service.application.exceptions.ResourceNotFoundException;
 import com.felipegabrill.twitter.like_service.application.usecases.LikeUseCases;
+import com.felipegabrill.twitter.like_service.application.publisher.ILikePublisher;
 import com.felipegabrill.twitter.like_service.domain.like.Like;
 import com.felipegabrill.twitter.like_service.domain.like.repository.LikeRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,19 +22,32 @@ import java.util.UUID;
 @Service
 public class LikeUseCasesImpl implements LikeUseCases {
 
-    private final LikeRepository likeRepository;
+    private static final Logger log = LoggerFactory.getLogger(LikeUseCasesImpl.class);
 
-    public LikeUseCasesImpl(LikeRepository likeRepository) {
+    private final LikeRepository likeRepository;
+    private final ILikePublisher likePublisher;
+
+    public LikeUseCasesImpl(LikeRepository likeRepository, ILikePublisher likePublisher) {
         this.likeRepository = likeRepository;
+        this.likePublisher = likePublisher;
     }
 
     @Transactional
     @Override
     public void like(UUID userId, UUID tweetId) {
+        log.info("Creating like | userId={} | tweetId={}", userId, tweetId);
+
         try {
             Like like = createLike(userId, tweetId);
             likeRepository.save(like);
+
+            log.info("Like persisted successfully | likeId={}", like.getId());
+
+            likePublisher.publishLikeCreated(tweetId, userId);
+            log.info("LikeCreated event published | tweetId={} | userId={}", tweetId, userId);
+
         } catch (DataIntegrityViolationException e) {
+            log.warn("Like already exists | userId={} | tweetId={}", userId, tweetId);
             throw new LikeAlreadyExistsException(
                     "User " + userId + " already liked tweet " + tweetId
             );
@@ -41,23 +57,37 @@ public class LikeUseCasesImpl implements LikeUseCases {
     @Transactional
     @Override
     public void unlike(UUID userId, UUID tweetId) {
+        log.info("Removing like | userId={} | tweetId={}", userId, tweetId);
+
         int deleted = likeRepository.deleteByTweetIdAndUserId(tweetId, userId);
+
         if (deleted == 0) {
+            log.warn("Like not found | userId={} | tweetId={}", userId, tweetId);
             throw new ResourceNotFoundException(
                     "Like not found for user " + userId + " and tweet " + tweetId
             );
         }
+
+        log.info("Like removed successfully | userId={} | tweetId={}", userId, tweetId);
+
+        likePublisher.publishLikeDeleted(tweetId, userId);
+        log.info("LikeDeleted event published | tweetId={} | userId={}", tweetId, userId);
     }
 
     @Transactional(readOnly = true)
     @Override
     public LikeStatusResponseDTO hasLiked(UUID userId, UUID tweetId) {
-        return new LikeStatusResponseDTO(likeRepository.existsByTweetIdAndUserId(tweetId, userId));
+        log.debug("Checking if like exists | userId={} | tweetId={}", userId, tweetId);
+
+        return new LikeStatusResponseDTO(
+                likeRepository.existsByTweetIdAndUserId(tweetId, userId)
+        );
     }
 
     @Transactional(readOnly = true)
     @Override
     public Page<LikeResponseDTO> listLikesByTweetId(UUID tweetId, Pageable pageable) {
+        log.debug("Fetching likes by tweet | tweetId={}", tweetId);
 
         return likeRepository.listLikesByTweetId(tweetId, pageable)
                 .map(like -> new LikeResponseDTO(
