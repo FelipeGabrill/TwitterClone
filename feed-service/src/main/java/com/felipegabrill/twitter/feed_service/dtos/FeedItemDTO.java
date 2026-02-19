@@ -26,12 +26,6 @@ public class FeedItemDTO {
     private String userId;
 
     @Schema(
-            description = "Ranking score used to order feed items",
-            example = "150"
-    )
-    private Long score;
-
-    @Schema(
             description = "Creation timestamp of the feed item",
             example = "2026-02-05T12:30:00Z"
     )
@@ -39,11 +33,10 @@ public class FeedItemDTO {
 
     public FeedItemDTO() {}
 
-    public FeedItemDTO(String tweetId, String authorId, String userId, Long score, Instant createdAt) {
+    public FeedItemDTO(String tweetId, String authorId, String userId, Instant createdAt) {
         this.tweetId = tweetId;
         this.authorId = authorId;
         this.userId = userId;
-        this.score = score;
         this.createdAt = createdAt;
     }
 
@@ -69,14 +62,6 @@ public class FeedItemDTO {
 
     public void setUserId(String userId) {
         this.userId = userId;
-    }
-
-    public Long getScore() {
-        return score;
-    }
-
-    public void setScore(Long score) {
-        this.score = score;
     }
 
     public Instant getCreatedAt() {

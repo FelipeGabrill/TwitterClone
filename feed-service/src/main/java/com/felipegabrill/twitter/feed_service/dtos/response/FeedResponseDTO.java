@@ -15,18 +15,26 @@ public class FeedResponseDTO {
     private List<FeedItemDTO> items;
 
     @Schema(
-            description = "Cursor used to fetch the next page of results",
-            example = "eyJQSyI6IlVTRVIjMTIzIiwiU0siOiIxNzA3MjAwMDAwIn0=",
-            nullable = true
+            description = "Cursor for RDS feed pagination",
+            nullable = true,
+            example = "eyJh..."
     )
-    private String nextCursor;
+    private String rdsCursor;
+
+    @Schema(
+            description = "Cursor for DynamoDB feed pagination",
+            nullable = true,
+            example = "eyJi..."
+    )
+    private String dynamoCursor;
 
     public FeedResponseDTO() {
     }
 
-    public FeedResponseDTO(List<FeedItemDTO> items, String nextCursor) {
+    public FeedResponseDTO(List<FeedItemDTO> items, String rdsCursor, String dynamoCursor) {
         this.items = items;
-        this.nextCursor = nextCursor;
+        this.rdsCursor = rdsCursor;
+        this.dynamoCursor = dynamoCursor;
     }
 
     public List<FeedItemDTO> getItems() {
@@ -37,11 +45,19 @@ public class FeedResponseDTO {
         this.items = items;
     }
 
-    public String getNextCursor() {
-        return nextCursor;
+    public String getRdsCursor() {
+        return rdsCursor;
     }
 
-    public void setNextCursor(String nextCursor) {
-        this.nextCursor = nextCursor;
+    public void setRdsCursor(String rdsCursor) {
+        this.rdsCursor = rdsCursor;
+    }
+
+    public String getDynamoCursor() {
+        return dynamoCursor;
+    }
+
+    public void setDynamoCursor(String dynamoCursor) {
+        this.dynamoCursor = dynamoCursor;
     }
 }
