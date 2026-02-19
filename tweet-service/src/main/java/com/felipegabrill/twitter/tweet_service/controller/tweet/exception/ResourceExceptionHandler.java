@@ -1,6 +1,6 @@
 package com.felipegabrill.twitter.tweet_service.controller.tweet.exception;
 
-import com.felipegabrill.twitter.tweet_service.service.tweet.exceptions.*;
+import com.felipegabrill.twitter.tweet_service.service.exceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

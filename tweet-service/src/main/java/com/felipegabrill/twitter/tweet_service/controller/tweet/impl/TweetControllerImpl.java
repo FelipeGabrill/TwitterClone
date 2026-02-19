@@ -8,6 +8,8 @@ import com.felipegabrill.twitter.tweet_service.dtos.tweet.RetweetDTO;
 import com.felipegabrill.twitter.tweet_service.dtos.tweet.response.*;
 import com.felipegabrill.twitter.tweet_service.service.tweet.ITweetService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1")
 public class TweetControllerImpl implements ITweetController {
+
+    private static final Logger log = LoggerFactory.getLogger(TweetControllerImpl.class);
 
     private final ITweetService tweetService;
 
@@ -30,7 +34,21 @@ public class TweetControllerImpl implements ITweetController {
             @PathVariable UUID authorId,
             @Valid @ModelAttribute CreateTweetDTO createTweetDTO
     ) {
-        NormalTweetResponseDTO response = tweetService.createTweet(authorId, createTweetDTO);
+
+        log.info(
+                "Create tweet request received | authorId={}",
+                authorId
+        );
+
+        NormalTweetResponseDTO response =
+                tweetService.createTweet(authorId, createTweetDTO);
+
+        log.info(
+                "Tweet created successfully | tweetId={} | authorId={}",
+                response.getId(),
+                authorId
+        );
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -40,7 +58,22 @@ public class TweetControllerImpl implements ITweetController {
             @PathVariable UUID authorId,
             @Valid @ModelAttribute ReplyTweetDTO replyTweetDTO
     ) {
-        ReplyTweetResponseDTO response = tweetService.replyTweet(authorId, replyTweetDTO);
+
+        log.info(
+                "Reply tweet request received | authorId={} | repliedTweetId={}",
+                authorId,
+                replyTweetDTO.getReplyToTweetId()
+        );
+
+        ReplyTweetResponseDTO response =
+                tweetService.replyTweet(authorId, replyTweetDTO);
+
+        log.info(
+                "Reply tweet created | tweetId={} | authorId={}",
+                response.getId(),
+                authorId
+        );
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -50,7 +83,22 @@ public class TweetControllerImpl implements ITweetController {
             @PathVariable UUID authorId,
             @Valid @ModelAttribute RetweetDTO retweetDTO
     ) {
-        RetweetResponseDTO response = tweetService.retweet(authorId, retweetDTO);
+
+        log.info(
+                "Retweet request received | authorId={} | originalTweetId={}",
+                authorId,
+                retweetDTO.getTweetId()
+        );
+
+        RetweetResponseDTO response =
+                tweetService.retweet(authorId, retweetDTO);
+
+        log.info(
+                "Retweet created | tweetId={} | authorId={}",
+                response.getId(),
+                authorId
+        );
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -60,28 +108,23 @@ public class TweetControllerImpl implements ITweetController {
             @PathVariable UUID authorId,
             @Valid @ModelAttribute QuoteTweetDTO quoteTweetDTO
     ) {
-        QuoteTweetResponseDTO response = tweetService.quoteTweet(authorId, quoteTweetDTO);
+
+        log.info(
+                "Quote tweet request received | authorId={} | quotedTweetId={}",
+                authorId,
+                quoteTweetDTO.getTweetId()
+        );
+
+        QuoteTweetResponseDTO response =
+                tweetService.quoteTweet(authorId, quoteTweetDTO);
+
+        log.info(
+                "Quote tweet created | tweetId={} | authorId={}",
+                response.getId(),
+                authorId
+        );
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @Override
-    @PostMapping("/users/{authorId}/tweets/{tweetId}/like")
-    public ResponseEntity<Void> likeTweet(
-            @PathVariable UUID authorId,
-            @PathVariable UUID tweetId
-    ) {
-        tweetService.likeTweet(authorId, tweetId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @Override
-    @PostMapping("/users/{authorId}/tweets/{tweetId}/unlike")
-    public ResponseEntity<Void> unlikeTweet(
-            @PathVariable UUID authorId,
-            @PathVariable UUID tweetId
-    ) {
-        tweetService.unlikeTweet(authorId, tweetId);
-        return ResponseEntity.noContent().build();
     }
 
     @Override
@@ -89,7 +132,15 @@ public class TweetControllerImpl implements ITweetController {
     public ResponseEntity<BaseTweetResponseDTO> getTweetById(
             @PathVariable UUID tweetId
     ) {
-        return ResponseEntity.ok(tweetService.getTweetById(tweetId));
+
+        log.info(
+                "Get tweet by id request received | tweetId={}",
+                tweetId
+        );
+
+        return ResponseEntity.ok(
+                tweetService.getTweetById(tweetId)
+        );
     }
 
     @Override
@@ -98,7 +149,21 @@ public class TweetControllerImpl implements ITweetController {
             @PathVariable UUID authorId,
             @PathVariable UUID tweetId
     ) {
+
+        log.info(
+                "Delete tweet request received | authorId={} | tweetId={}",
+                authorId,
+                tweetId
+        );
+
         tweetService.deleteTweet(authorId, tweetId);
+
+        log.info(
+                "Tweet deleted | tweetId={} | authorId={}",
+                tweetId,
+                authorId
+        );
+
         return ResponseEntity.noContent().build();
     }
 }
