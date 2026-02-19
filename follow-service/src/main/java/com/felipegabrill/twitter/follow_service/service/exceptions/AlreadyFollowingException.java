@@ -1,4 +1,4 @@
-package com.felipegabrill.twitter.follow_service.service.follow.exceptions;
+package com.felipegabrill.twitter.follow_service.service.exceptions;
 
 public class AlreadyFollowingException extends RuntimeException {
     public AlreadyFollowingException(String message) {
