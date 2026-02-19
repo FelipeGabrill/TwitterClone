@@ -71,22 +71,6 @@ public interface ITweetController {
             @Valid @ModelAttribute QuoteTweetDTO quoteTweetDTO
     );
 
-    @Operation(summary = "Like a tweet")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Tweet liked successfully"),
-            @ApiResponse(responseCode = "404", description = "Tweet not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = StandardError.class)))
-    })
-    @PostMapping("/users/{authorId}/tweets/{tweetId}/like")
-    ResponseEntity<Void> likeTweet(@PathVariable UUID authorId, @PathVariable UUID tweetId);
-
-    @Operation(summary = "Unlike a tweet")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Tweet unliked successfully"),
-            @ApiResponse(responseCode = "404", description = "Tweet not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = StandardError.class)))
-    })
-    @PostMapping("/users/{authorId}/tweets/{tweetId}/unlike")
-    ResponseEntity<Void> unlikeTweet(@PathVariable UUID authorId, @PathVariable UUID tweetId);
-
     @Operation(summary = "Get tweet by id")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Tweet found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = BaseTweetResponseDTO.class))),
