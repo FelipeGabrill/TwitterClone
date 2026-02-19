@@ -1,10 +1,10 @@
-package com.felipegabrill.twitter.feed_service.database.entities;
+package com.felipegabrill.twitter.feed_service.database.dynamodb.entities;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 import java.time.Instant;
 
 @DynamoDbBean
-public class FeedEntity {
+public class Feed {
 
     private String pk;
     private String sk;
@@ -12,9 +12,10 @@ public class FeedEntity {
     private String tweetId;
     private String authorId;
     private Instant createdAt;
-    private Long score;
     private String feedType;
 
+    private String gsiDatePk;
+    private String gsiDateSk;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("PK")
@@ -63,15 +64,6 @@ public class FeedEntity {
         this.createdAt = createdAt;
     }
 
-    @DynamoDbAttribute("score")
-    public Long getScore() {
-        return score;
-    }
-
-    public void setScore(Long score) {
-        this.score = score;
-    }
-
     @DynamoDbAttribute("feedType")
     public String getFeedType() {
         return feedType;
@@ -79,6 +71,26 @@ public class FeedEntity {
 
     public void setFeedType(String feedType) {
         this.feedType = feedType;
+    }
+
+    @DynamoDbSecondaryPartitionKey(indexNames = "GSI_DATE")
+    @DynamoDbAttribute("GSI_DATE_PK")
+    public String getGsiDatePk() {
+        return gsiDatePk;
+    }
+
+    public void setGsiDatePk(String gsiDatePk) {
+        this.gsiDatePk = gsiDatePk;
+    }
+
+    @DynamoDbSecondarySortKey(indexNames = "GSI_DATE")
+    @DynamoDbAttribute("GSI_DATE_SK")
+    public String getGsiDateSk() {
+        return gsiDateSk;
+    }
+
+    public void setGsiDateSk(String gsiDateSk) {
+        this.gsiDateSk = gsiDateSk;
     }
 
 }

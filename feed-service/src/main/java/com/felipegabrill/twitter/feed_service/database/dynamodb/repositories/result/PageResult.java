@@ -1,4 +1,4 @@
-package com.felipegabrill.twitter.feed_service.database.repositories.result;
+package com.felipegabrill.twitter.feed_service.database.dynamodb.repositories.result;
 
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
